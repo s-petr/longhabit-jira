@@ -1,0 +1,35 @@
+modules:
+  jira:issuePanel:
+    - key: longhabit-issue-panel
+      resource: issue-panel-ui
+      resolver:
+        function: resolver
+      render: native
+      title: longhabit
+      icon: https://longhabit.com/favicon-32x32.png
+  jira:globalPage:
+    - key: longhabit-app
+      resource: app-page-ui
+      resolver:
+        function: resolver
+      render: native
+      title: Long Habit Recurring Task Tracker
+      icon: https://longhabit.com/favicon-32x32.png
+  function:
+    - key: resolver
+      handler: index.handler
+resources:
+  - key: app-page-ui
+    path: src/frontend/app-page.tsx
+  - key: issue-panel-ui
+    path: src/frontend/issue-panel.tsx
+permissions:
+  scopes:
+    - storage:app
+    - read:jira-work
+app:
+  runtime:
+    name: nodejs22.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/8d35b256-5c46-441e-89a8-a87719264dac
