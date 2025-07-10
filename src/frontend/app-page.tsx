@@ -7,19 +7,15 @@ import ForgeReconciler, {
   Text
 } from '@forge/react'
 import React, { useEffect, useState } from 'react'
-
-type Task = {
-  key: string
-  name: string
-  project: string
-  status: string
-}
+import { Task } from 'src/schemas/task'
 
 const head = {
   cells: Object.entries({
-    key: 'Key',
+    issueKey: 'Issue Key',
     name: 'Name',
     project: 'Project',
+    category: 'Category',
+    daysRepeat: 'Days Repeat',
     status: 'Status'
   }).map(([key, content]) => ({ key, content, isSortable: true }))
 }
@@ -30,7 +26,7 @@ const UserIssues = () => {
   useEffect(() => {
     const fetchIssues = async () => {
       try {
-        const data: any = await invoke('getActiveTasksData')
+        const data: Task[] = await invoke('getActiveTasksData')
         setTasks(data || [])
       } catch (error) {
         console.error('Error:', error)
@@ -46,19 +42,22 @@ const UserIssues = () => {
 
   const rows = tasks.map((task, index) => ({
     key: `row-${index}`,
-    cells: Object.entries(task).map(([key, content]) => ({
-      key,
-      content:
-        key === 'key' ? (
-          <Pressable onClick={() => handleOpenIssue(content)}>
-            {content}
+    cells: [
+      {
+        key: 'issueKey',
+        content: (
+          <Pressable onClick={() => handleOpenIssue(task.issueKey)}>
+            {task.issueKey}
           </Pressable>
-        ) : (
-          content
         )
-    }))
+      },
+      { key: 'name', content: task.name },
+      { key: 'project', content: task.project },
+      { key: 'category', content: task?.category },
+      { key: 'daysRepeat', content: task?.daysRepeat },
+      { key: 'status', content: task.status }
+    ]
   }))
-
   return (
     <>
       <DynamicTable caption='Tasks List' head={head} rows={rows} />

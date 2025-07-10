@@ -10,9 +10,26 @@ const taskHistoryDateSchema = z.string().refine((date) => {
   }
 }, 'Invalid date. Must use format yyyy-MM-dd')
 
-export const taskDataSchema = z.object({
+export const taskMetadataSchema = z.object({
+  issueKey: z.string().min(1).max(255),
   isActive: z.boolean(),
-  history: z.array(taskHistoryDateSchema)
+  category: z.string().min(1).max(100).optional(),
+  daysRepeat: z.coerce.number().int().min(1).optional(),
+  history: z.array(taskHistoryDateSchema).optional()
 })
 
-export type Task = z.infer<typeof taskDataSchema>
+export const taskMetadataKvResponse = z.array(
+  z.object({
+    key: z.string().min(1).max(255),
+    value: taskMetadataSchema.omit({ issueKey: true })
+  })
+)
+
+export const taskSchema = taskMetadataSchema.extend({
+  name: z.string().min(1).max(255),
+  project: z.string().min(1).max(255),
+  status: z.string().min(1).max(255)
+})
+
+export type TaskMetadata = z.infer<typeof taskMetadataSchema>
+export type Task = z.infer<typeof taskSchema>
