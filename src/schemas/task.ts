@@ -1,7 +1,7 @@
 import { isValid, parse } from 'date-fns'
 import { z } from 'zod/v4'
 
-const taskHistoryDateSchema = z.string().refine((date) => {
+export const taskHistoryDateSchema = z.string().refine((date) => {
   try {
     const parsedDate = parse(date, 'yyyy-MM-dd', new Date())
     return isValid(parsedDate)
@@ -9,14 +9,17 @@ const taskHistoryDateSchema = z.string().refine((date) => {
     return false
   }
 }, 'Invalid date. Must use format yyyy-MM-dd')
+export type TaskHistoryDate = z.infer<typeof taskHistoryDateSchema>
 
 export const taskMetadataSchema = z.object({
   issueKey: z.string().min(1).max(255),
-  isActive: z.boolean(),
+  isActive: z.boolean().default(false),
   category: z.string().min(1).max(100).optional(),
+  repeatGoalEnabled: z.boolean().default(false),
   daysRepeat: z.coerce.number().int().min(1).optional(),
   history: z.array(taskHistoryDateSchema).optional()
 })
+export type TaskMetadata = z.infer<typeof taskMetadataSchema>
 
 export const taskMetadataKvResponse = z.array(
   z.object({
@@ -30,6 +33,4 @@ export const taskSchema = taskMetadataSchema.extend({
   project: z.string().min(1).max(255),
   status: z.string().min(1).max(255)
 })
-
-export type TaskMetadata = z.infer<typeof taskMetadataSchema>
 export type Task = z.infer<typeof taskSchema>

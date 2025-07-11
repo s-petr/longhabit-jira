@@ -1,6 +1,7 @@
 import { invoke, view } from '@forge/bridge'
 import ForgeReconciler, {
   Button,
+  Calendar,
   Checkbox,
   Label,
   Spinner,
@@ -8,7 +9,8 @@ import ForgeReconciler, {
   Textfield
 } from '@forge/react'
 import React, { useEffect, useState } from 'react'
-import { Task, TaskMetadata } from 'src/schemas/task'
+import { Task, TaskMetadata } from '../schemas/task'
+import { dateToString } from '../utils/date-convert'
 
 function AppPage() {
   const [taskData, setTaskData] = useState<TaskMetadata | null>(null)
@@ -18,7 +20,6 @@ function AppPage() {
     const fetchTask = async () => {
       try {
         const data: Task | null = await invoke('getTask')
-        console.log('Task Data:', data)
         setTaskData(data)
       } catch (error) {
         console.error('Error loading task data')
@@ -41,9 +42,24 @@ function AppPage() {
   }
 
   const handleUpdateTask = async () => {
+    console.log('taskData', taskData)
     if (!taskData) return
     await invoke('setTask', taskData)
     await view.refresh()
+  }
+
+  const handleSetHistory = (e: any) => {
+    const selectedDay = e?.iso
+    const currentHistory = taskData?.history ?? []
+    const newHistory = currentHistory.includes(selectedDay)
+      ? currentHistory.filter((day) => day !== selectedDay)
+      : [...currentHistory, selectedDay].sort()
+
+    taskData &&
+      setTaskData((current) => ({
+        ...current!,
+        history: newHistory
+      }))
   }
 
   return isLoading ? (
@@ -53,7 +69,17 @@ function AppPage() {
       {taskData?.isActive ? (
         <>
           <Button onClick={handleHideTask}>Stop tracking</Button>
-          <Checkbox label='Set a goal to repeat regularly' />
+          <Checkbox
+            label='Set a goal to repeat regularly'
+            isChecked={!!taskData.repeatGoalEnabled}
+            onChange={(e) =>
+              taskData &&
+              setTaskData((current) => ({
+                ...current!,
+                repeatGoalEnabled: !!e.target.checked
+              }))
+            }
+          />
           <Label labelFor='category'>Category</Label>
           <Textfield
             id='category'
@@ -77,6 +103,11 @@ function AppPage() {
                 daysRepeat: Number(e.target.value)
               }))
             }
+          />
+          <Calendar
+            maxDate={dateToString(new Date())}
+            selected={taskData.history ?? []}
+            onSelect={handleSetHistory}
           />
           <Button onClick={handleUpdateTask}>Update</Button>
         </>

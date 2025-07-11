@@ -1,21 +1,18 @@
 import { invoke } from '@forge/bridge'
 import { ViewIssueModal } from '@forge/jira-bridge'
-import ForgeReconciler, {
-  DynamicTable,
-  Heading,
-  Pressable,
-  Text
-} from '@forge/react'
+import ForgeReconciler, { DynamicTable, Lozenge, Pressable } from '@forge/react'
 import React, { useEffect, useState } from 'react'
 import { Task } from 'src/schemas/task'
+import { getTaskStatusLabels } from '../utils/task-status'
 
 const head = {
   cells: Object.entries({
-    issueKey: 'Issue Key',
+    issueKey: 'Issue',
     name: 'Name',
-    project: 'Project',
     category: 'Category',
-    daysRepeat: 'Days Repeat',
+    lastDate: 'Last Date',
+    repeats: 'Repeats',
+    nextDate: 'Next Date',
     status: 'Status'
   }).map(([key, content]) => ({ key, content, isSortable: true }))
 }
@@ -40,27 +37,63 @@ const UserIssues = () => {
     modal.open()
   }
 
-  const rows = tasks.map((task, index) => ({
-    key: `row-${index}`,
-    cells: [
-      {
-        key: 'issueKey',
-        content: (
-          <Pressable onClick={() => handleOpenIssue(task.issueKey)}>
-            {task.issueKey}
-          </Pressable>
-        )
-      },
-      { key: 'name', content: task.name },
-      { key: 'project', content: task.project },
-      { key: 'category', content: task?.category },
-      { key: 'daysRepeat', content: task?.daysRepeat },
-      { key: 'status', content: task.status }
-    ]
-  }))
+  const rows = tasks.map((task, index) => {
+    const { lastDateText, nextDateText, daysText, taskIsLate } =
+      getTaskStatusLabels(
+        task.repeatGoalEnabled,
+        task.daysRepeat ?? 0,
+        task.history ?? []
+      )
+
+    const statusColor = task.repeatGoalEnabled
+      ? taskIsLate
+        ? 'removed'
+        : 'success'
+      : 'inprogress'
+
+    return {
+      key: `row-${index}`,
+      cells: [
+        {
+          key: 'issueKey',
+          content: (
+            <Pressable
+              xcss={{ color: 'color.text.accent.blue' }}
+              onClick={() => handleOpenIssue(task.issueKey)}>
+              {task.issueKey}
+            </Pressable>
+          )
+        },
+        { key: 'name', content: task.name },
+        { key: 'category', content: task?.category },
+        { key: 'lastDate', content: lastDateText },
+        {
+          key: 'repeats',
+          content: (
+            <Lozenge isBold={!!task.repeatGoalEnabled}>
+              {task.repeatGoalEnabled
+                ? task.daysRepeat === 1
+                  ? 'every day'
+                  : `every ${task.daysRepeat} days`
+                : 'no goal'}
+            </Lozenge>
+          )
+        },
+        { key: 'nextDate', content: nextDateText },
+        {
+          key: 'status',
+          content: (
+            <Lozenge isBold appearance={statusColor}>
+              {daysText}
+            </Lozenge>
+          )
+        }
+      ]
+    }
+  })
   return (
     <>
-      <DynamicTable caption='Tasks List' head={head} rows={rows} />
+      <DynamicTable head={head} rows={rows} />
     </>
   )
 }
@@ -68,11 +101,6 @@ const UserIssues = () => {
 function AppPage() {
   return (
     <>
-      <Heading>Long Habit App</Heading>
-      <Text>
-        This will be the page with the recurring tasks summary. Will show all
-        recurring tasks across all projects that are visible to the user
-      </Text>
       <UserIssues />
     </>
   )

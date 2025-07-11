@@ -73,6 +73,7 @@ resolver.define('getActiveTasksData', async () => {
           issueKey,
           name: issue?.fields?.summary,
           category: metadata?.category,
+          repeatGoalEnabled: metadata.repeatGoalEnabled,
           daysRepeat: metadata?.daysRepeat,
           history: metadata?.history,
           project: issue?.fields?.project?.name,
@@ -105,8 +106,12 @@ resolver.define('setTask', async (req: any) => {
 
   await kvs.set(issueKeyToKvKey(newTaskData.issueKey), {
     ...taskData,
-    ...(newTaskData.category && { category: newTaskData.category }),
-    ...(newTaskData.daysRepeat && { daysRepeat: newTaskData.daysRepeat })
+    ...('category' in newTaskData && { category: newTaskData.category }),
+    ...('daysRepeat' in newTaskData && { daysRepeat: newTaskData.daysRepeat }),
+    ...('repeatGoalEnabled' in newTaskData && {
+      repeatGoalEnabled: newTaskData.repeatGoalEnabled
+    }),
+    ...('history' in newTaskData && { history: newTaskData.history })
   })
 })
 
