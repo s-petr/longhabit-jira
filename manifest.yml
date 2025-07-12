@@ -13,7 +13,7 @@ modules:
       resolver:
         function: resolver
       render: native
-      title: Long Habit Recurring Task Tracker
+      title: LongHabit Recurring Issue Tracker
       icon: https://longhabit.com/favicon-32x32.png
   function:
     - key: resolver

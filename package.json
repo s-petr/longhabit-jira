@@ -5,7 +5,7 @@
     "name": "Sergei Petrov",
     "github": "s-petr"
   },
-  "license":"AGPL-3.0-only",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/s-petr/longhabit-jira"
@@ -24,24 +24,24 @@
   },
   "dependencies": {
     "@forge/api": "^6.0.1",
-    "@forge/bridge": "5.1.0",
+    "@forge/bridge": "5.2.0",
     "@forge/jira-bridge": "^0.38.2",
     "@forge/kvs": "^1.0.1",
-    "@forge/react": "11.2.4",
-    "@forge/resolver": "1.6.13",
+    "@forge/react": "^11.2.5",
+    "@forge/resolver": "^1.6.14",
     "date-fns": "^4.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zod": "^3.25.75"
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@forge/cli": "^12.1.0",
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.13",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
-    "eslint": "^9.30.1",
+    "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.1",

@@ -11,7 +11,7 @@ export function getTaskStatusLabels(
   daysRepeat: number,
   history: TaskHistoryDate[]
 ) {
-  const lastDate = history[0] ? stringToDate(history[0]) : null
+  const lastDate = history.at(-1) ? stringToDate(history.at(-1) ?? '') : null
   const nextDate = getNextDueDate(history, daysRepeat)
 
   const daysSince = lastDate

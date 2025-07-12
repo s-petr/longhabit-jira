@@ -17,7 +17,7 @@ export const taskMetadataSchema = z.object({
   category: z.string().min(1).max(100).optional(),
   repeatGoalEnabled: z.boolean().default(false),
   daysRepeat: z.coerce.number().int().min(1).optional(),
-  history: z.array(taskHistoryDateSchema).optional()
+  history: z.array(taskHistoryDateSchema).default([])
 })
 export type TaskMetadata = z.infer<typeof taskMetadataSchema>
 

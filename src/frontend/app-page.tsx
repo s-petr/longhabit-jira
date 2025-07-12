@@ -1,8 +1,17 @@
-import { invoke } from '@forge/bridge'
+import { invoke, router } from '@forge/bridge'
 import { ViewIssueModal } from '@forge/jira-bridge'
-import ForgeReconciler, { DynamicTable, Lozenge, Pressable } from '@forge/react'
+import ForgeReconciler, {
+  Box,
+  Button,
+  DynamicTable,
+  Inline,
+  LoadingButton,
+  Lozenge,
+  Pressable
+} from '@forge/react'
 import React, { useEffect, useState } from 'react'
-import { Task } from 'src/schemas/task'
+import { Task } from '../schemas/task'
+import { dateToString } from '../utils/date-convert'
 import { getTaskStatusLabels } from '../utils/task-status'
 
 const head = {
@@ -13,28 +22,55 @@ const head = {
     lastDate: 'Last Date',
     repeats: 'Repeats',
     nextDate: 'Next Date',
-    status: 'Status'
+    status: 'Status',
+    done: 'Mark Done'
   }).map(([key, content]) => ({ key, content, isSortable: true }))
 }
 
 const UserIssues = () => {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [taskIsUpdating, setTaskIsUpdating] = useState('')
+
+  const fetchIssues = async () => {
+    try {
+      const data: Task[] = await invoke('getActiveTasksData')
+      setTasks(data || [])
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
 
   useEffect(() => {
-    const fetchIssues = async () => {
-      try {
-        const data: Task[] = await invoke('getActiveTasksData')
-        setTasks(data || [])
-      } catch (error) {
-        console.error('Error:', error)
-      }
-    }
     fetchIssues()
   }, [])
 
   const handleOpenIssue = (issueKey: string) => {
     const modal = new ViewIssueModal({ context: { issueKey } })
     modal.open()
+  }
+
+  const handleTaskDone = async (issueKey: string) => {
+    try {
+      setTaskIsUpdating(issueKey)
+      await invoke('taskDone', { issueKey })
+      await fetchIssues()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setTaskIsUpdating('')
+    }
+  }
+
+  const handleUndoTaskDone = async (issueKey: string) => {
+    try {
+      setTaskIsUpdating(issueKey)
+      await invoke('undoTaskDone', { issueKey })
+      await fetchIssues()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setTaskIsUpdating('')
+    }
   }
 
   const rows = tasks.map((task, index) => {
@@ -87,12 +123,55 @@ const UserIssues = () => {
               {daysText}
             </Lozenge>
           )
+        },
+        {
+          key: 'done',
+          content:
+            taskIsUpdating !== task.issueKey ? (
+              task.history.at(-1) === dateToString(new Date()) ? (
+                <Box xcss={{ width: '100px' }}>
+                  <Button
+                    shouldFitContainer
+                    iconBefore='undo'
+                    appearance='subtle'
+                    spacing='compact'
+                    onClick={() => handleUndoTaskDone(task.issueKey)}>
+                    Undo
+                  </Button>
+                </Box>
+              ) : (
+                <Box xcss={{ width: '100px' }}>
+                  <Button
+                    shouldFitContainer
+                    iconBefore='check'
+                    appearance='primary'
+                    spacing='compact'
+                    onClick={() => handleTaskDone(task.issueKey)}>
+                    Done
+                  </Button>
+                </Box>
+              )
+            ) : (
+              <Box xcss={{ width: '100px' }}>
+                <LoadingButton shouldFitContainer isLoading spacing='compact'>
+                  Updating...
+                </LoadingButton>
+              </Box>
+            )
         }
       ]
     }
   })
   return (
     <>
+      <Inline space='space.200'>
+        <Button iconBefore='refresh' onClick={() => router.reload()}>
+          Refresh Page
+        </Button>
+        <Button iconBefore='refresh' onClick={() => fetchIssues()}>
+          Refetch Data
+        </Button>
+      </Inline>
       <DynamicTable head={head} rows={rows} />
     </>
   )

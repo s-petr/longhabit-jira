@@ -7,6 +7,7 @@ import {
   taskMetadataKvResponse,
   taskMetadataSchema
 } from '../schemas/task'
+import { dateToString } from '../utils/date-convert'
 
 const TASK_KEY_PREFIX = 'task-'
 
@@ -46,6 +47,18 @@ const getActiveTasksMetadata = async (): Promise<TaskMetadata[]> => {
       issueKey: kvKeyToIssueKey(key)
     }))
   return activeTasks
+}
+
+const getTaskMetadata = async (issueKey: string) => {
+  const { value } =
+    (await kvs
+      .query()
+      .where('key', WhereConditions.beginsWith(issueKeyToKvKey(issueKey)))
+      .getOne()) ?? {}
+
+  const { success: isValid, data: taskMetadata } =
+    taskMetadataSchema.safeParse(value)
+  return isValid ? taskMetadata : null
 }
 
 const getActiveTasksList = (tasksMetadata: TaskMetadata[]) =>
@@ -112,6 +125,36 @@ resolver.define('setTask', async (req: any) => {
       repeatGoalEnabled: newTaskData.repeatGoalEnabled
     }),
     ...('history' in newTaskData && { history: newTaskData.history })
+  })
+})
+
+resolver.define('taskDone', async (req: any) => {
+  const issueKey = req?.payload?.issueKey
+  const dateDone = req?.payload?.dateDone ?? dateToString(new Date())
+  if (!issueKey) return
+  const taskMetaData = await getTaskMetadata(issueKey)
+  if (!taskMetaData || taskMetaData.history?.includes(dateDone)) return
+
+  const newHistory = [...taskMetaData.history, dateDone].sort()
+
+  await kvs.set(issueKeyToKvKey(issueKey), {
+    ...taskMetaData,
+    history: newHistory
+  })
+})
+
+resolver.define('undoTaskDone', async (req: any) => {
+  const issueKey = req?.payload?.issueKey
+  const dateDone = req?.payload?.dateDone ?? dateToString(new Date())
+  if (!issueKey) return
+  const taskMetaData = await getTaskMetadata(issueKey)
+  if (!taskMetaData || !taskMetaData.history?.includes(dateDone)) return
+
+  const newHistory = taskMetaData.history.filter((date) => date !== dateDone)
+
+  await kvs.set(issueKeyToKvKey(issueKey), {
+    ...taskMetaData,
+    history: newHistory
   })
 })
 
