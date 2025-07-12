@@ -52,7 +52,7 @@ const UserIssues = () => {
   const handleTaskDone = async (issueKey: string) => {
     try {
       setTaskIsUpdating(issueKey)
-      await invoke('taskDone', { issueKey })
+      await invoke('taskDone', { issueKey, dateDone: dateToString(new Date()) })
       await fetchIssues()
     } catch (error) {
       console.error(error)
@@ -64,7 +64,10 @@ const UserIssues = () => {
   const handleUndoTaskDone = async (issueKey: string) => {
     try {
       setTaskIsUpdating(issueKey)
-      await invoke('undoTaskDone', { issueKey })
+      await invoke('undoTaskDone', {
+        issueKey,
+        dateDone: dateToString(new Date())
+      })
       await fetchIssues()
     } catch (error) {
       console.error(error)
