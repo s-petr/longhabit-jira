@@ -7,7 +7,7 @@ import {
   taskMetadataKvResponse,
   taskMetadataSchema
 } from '../schemas/task'
-import { dateToString } from '../utils/date-convert'
+import { dateToString, getNextDueDate } from '../utils/date-convert'
 
 const TASK_KEY_PREFIX = 'task-'
 
@@ -64,6 +64,40 @@ const getTaskMetadata = async (issueKey: string) => {
 const getActiveTasksList = (tasksMetadata: TaskMetadata[]) =>
   tasksMetadata.map((task) => task.issueKey)
 
+const updateDueDate = async (task: TaskMetadata) => {
+  const daysRepeat = Number(task.daysRepeat)
+  if (!task.repeatGoalEnabled || !daysRepeat || !task.history.length)
+    return clearDueDate(task.issueKey)
+  const lastDate = task.history.at(-1)
+  if (!lastDate) return
+
+  const nextDate = getNextDueDate(task.history, daysRepeat)
+
+  await api.asUser().requestJira(route`/rest/api/3/issue/${task.issueKey}`, {
+    method: 'PUT',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      fields: { duedate: nextDate }
+    })
+  })
+}
+
+const clearDueDate = async (issueKey: string) => {
+  await api.asUser().requestJira(route`/rest/api/3/issue/${issueKey}`, {
+    method: 'PUT',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      fields: { duedate: null }
+    })
+  })
+}
+
 resolver.define('getActiveTasksData', async () => {
   try {
     const tasksMetadata = await getActiveTasksMetadata()
@@ -114,18 +148,23 @@ resolver.define('setTask', async (req: any) => {
     taskMetadataSchema.safeParse(req?.payload)
   if (!isValidTask) return
 
-  const taskData = await getTaskByKey(newTaskData.issueKey)
-  if (!taskData) return
+  const taskMetadata = await getTaskByKey(newTaskData.issueKey)
+  if (!taskMetadata) return
 
-  await kvs.set(issueKeyToKvKey(newTaskData.issueKey), {
-    ...taskData,
+  const updatedTaskMetadata = {
+    ...taskMetadata,
     ...('category' in newTaskData && { category: newTaskData.category }),
     ...('daysRepeat' in newTaskData && { daysRepeat: newTaskData.daysRepeat }),
     ...('repeatGoalEnabled' in newTaskData && {
       repeatGoalEnabled: newTaskData.repeatGoalEnabled
     }),
     ...('history' in newTaskData && { history: newTaskData.history })
-  })
+  }
+
+  await kvs.set(issueKeyToKvKey(newTaskData.issueKey), updatedTaskMetadata)
+
+  if (updatedTaskMetadata.history.length)
+    await updateDueDate(updatedTaskMetadata)
 })
 
 resolver.define('taskDone', async (req: any) => {
@@ -135,12 +174,14 @@ resolver.define('taskDone', async (req: any) => {
   const taskMetaData = await getTaskMetadata(issueKey)
   if (!taskMetaData || taskMetaData.history?.includes(dateDone)) return
 
-  const newHistory = [...taskMetaData.history, dateDone].sort()
-
-  await kvs.set(issueKeyToKvKey(issueKey), {
+  const newTaskMetadata = {
     ...taskMetaData,
-    history: newHistory
-  })
+    history: [...taskMetaData.history, dateDone].sort()
+  }
+
+  await kvs.set(issueKeyToKvKey(issueKey), newTaskMetadata)
+
+  await updateDueDate(newTaskMetadata)
 })
 
 resolver.define('undoTaskDone', async (req: any) => {
@@ -150,22 +191,29 @@ resolver.define('undoTaskDone', async (req: any) => {
   const taskMetaData = await getTaskMetadata(issueKey)
   if (!taskMetaData || !taskMetaData.history?.includes(dateDone)) return
 
-  const newHistory = taskMetaData.history.filter((date) => date !== dateDone)
-
-  await kvs.set(issueKeyToKvKey(issueKey), {
+  const newTaskMetadata = {
     ...taskMetaData,
-    history: newHistory
-  })
+    history: taskMetaData.history.filter((date) => date !== dateDone)
+  }
+
+  await kvs.set(issueKeyToKvKey(issueKey), newTaskMetadata)
+
+  await updateDueDate(newTaskMetadata)
 })
 
 resolver.define('addTask', async (req: any) => {
   const issueKey = req?.context?.extension?.issue?.key
   if (!issueKey) return
-  const taskData = await getTaskByKey(issueKey)
+  const taskMetadata = await getTaskByKey(issueKey)
 
-  if (taskData) {
-    if (!taskData.isActive)
-      await kvs.set(issueKeyToKvKey(issueKey), { ...taskData, isActive: true })
+  if (taskMetadata) {
+    if (!taskMetadata.isActive) {
+      await kvs.set(issueKeyToKvKey(issueKey), {
+        ...taskMetadata,
+        isActive: true
+      })
+      if (taskMetadata.history.length) await updateDueDate(taskMetadata)
+    }
   } else {
     await kvs.set(issueKeyToKvKey(issueKey), { isActive: true, history: [] })
   }
@@ -178,6 +226,8 @@ resolver.define('hideTask', async (req: any) => {
 
   if (taskData)
     await kvs.set(issueKeyToKvKey(issueKey), { ...taskData, isActive: false })
+
+  await clearDueDate(issueKey)
 })
 
 export const handler = resolver.getDefinitions()

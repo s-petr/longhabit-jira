@@ -45,7 +45,10 @@ const UserIssues = () => {
   }, [])
 
   const handleOpenIssue = (issueKey: string) => {
-    const modal = new ViewIssueModal({ context: { issueKey } })
+    const modal = new ViewIssueModal({
+      context: { issueKey },
+      onClose: fetchIssues
+    })
     modal.open()
   }
 
@@ -84,11 +87,14 @@ const UserIssues = () => {
         task.history ?? []
       )
 
-    const statusColor = task.repeatGoalEnabled
-      ? taskIsLate
-        ? 'removed'
-        : 'success'
-      : 'inprogress'
+    const statusColor =
+      task.repeatGoalEnabled &&
+      Number(task.daysRepeat) > 0 &&
+      task.history.length
+        ? taskIsLate
+          ? 'removed'
+          : 'success'
+        : 'inprogress'
 
     return {
       key: `row-${index}`,

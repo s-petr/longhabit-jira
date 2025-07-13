@@ -22,13 +22,13 @@ export function getTaskStatusLabels(
 
   const lastDateText = lastDate ? format(lastDate, 'dd MMM yyyy') : 'Never done'
   const nextDateText =
-    repeatGoalEnabled && daysRepeat > 0
+    repeatGoalEnabled && daysRepeat > 0 && lastDate
       ? format(nextDate, 'dd MMM yyyy')
       : 'N/A'
 
   let daysText
 
-  if (repeatGoalEnabled && daysRepeat > 0) {
+  if (repeatGoalEnabled && daysRepeat > 0 && lastDate) {
     const numDaysAbs = Math.abs(dueInDays)
 
     let numDaysText
