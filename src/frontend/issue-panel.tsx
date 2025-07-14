@@ -3,17 +3,43 @@ import ForgeReconciler, {
   Box,
   Button,
   Calendar,
-  Checkbox,
   Inline,
   Label,
   ProgressBar,
   Stack,
   Text,
-  Textfield
+  Textfield,
+  Toggle
 } from '@forge/react'
 import React, { useEffect, useState } from 'react'
 import { Task, TaskMetadata } from '../schemas/task'
 import { dateToString } from '../utils/date-convert'
+
+function ToggleActive({ isActive }: { isActive: boolean }) {
+  const handleAddTask = async () => {
+    await invoke('addTask')
+    await view.refresh()
+  }
+
+  const handleHideTask = async () => {
+    await invoke('hideTask')
+    await view.refresh()
+  }
+
+  return (
+    <Box xcss={{ paddingTop: 'space.200' }}>
+      <Inline space='space.100' alignBlock='center'>
+        <Toggle
+          id='active'
+          size='large'
+          isChecked={isActive}
+          onChange={() => (isActive ? handleHideTask() : handleAddTask())}
+        />
+        <Label labelFor='active'>Track with LongHabit</Label>
+      </Inline>
+    </Box>
+  )
+}
 
 function AppPage() {
   const [taskData, setTaskData] = useState<TaskMetadata | null>(null)
@@ -36,18 +62,7 @@ function AppPage() {
     fetchTask()
   }, [])
 
-  const handleAddTask = async () => {
-    await invoke('addTask')
-    await view.refresh()
-  }
-
-  const handleHideTask = async () => {
-    await invoke('hideTask')
-    await view.refresh()
-  }
-
   const handleUpdateTask = async () => {
-    console.log('taskData', taskData)
     if (!taskData) return
     await invoke('setTask', taskData)
     await view.refresh()
@@ -71,42 +86,54 @@ function AppPage() {
     <Box xcss={{ paddingTop: 'space.400' }}>
       <ProgressBar isIndeterminate ariaLabel='Loading task metadata' />
     </Box>
-  ) : (
-    <Stack space='space.200'>
-      {taskData?.isActive ? (
-        <>
-          <Stack space='space.050'>
-            <Label labelFor='repeat'>Repeat every x days</Label>
-            <Inline space='space.100' alignBlock='center'>
-              <Checkbox
-                id='repeat'
-                isChecked={!!taskData.repeatGoalEnabled}
-                onChange={(e) =>
-                  taskData &&
-                  setTaskData((current) => ({
-                    ...current!,
-                    repeatGoalEnabled: !!e.target.checked
-                  }))
-                }
-              />
-              <Textfield
-                value={taskData.daysRepeat}
-                isDisabled={!taskData.repeatGoalEnabled}
-                onChange={(e) =>
-                  taskData &&
-                  setTaskData((current) => ({
-                    ...current!,
-                    daysRepeat: Number(e.target.value)
-                  }))
-                }
-              />
-            </Inline>
-          </Stack>
-          <Stack space='space.050'>
-            <Label labelFor='category'>Category</Label>
+  ) : taskData?.isActive ? (
+    <Inline
+      shouldWrap
+      space='space.400'
+      alignInline='start'
+      spread='space-between'>
+      <Stack space='space.200'>
+        <ToggleActive isActive={!!taskData?.isActive} />
+        <Inline space='space.100' alignBlock='center' grow='hug'>
+          <Toggle
+            id='repeat-enabled'
+            size='large'
+            isChecked={!!taskData.repeatGoalEnabled}
+            onChange={(e) =>
+              taskData &&
+              setTaskData((current) => ({
+                ...current!,
+                repeatGoalEnabled: !!e.target.checked
+              }))
+            }
+          />
+
+          <Label labelFor='repeat-enabled'>Repeat every</Label>
+          <Textfield
+            isCompact
+            id='days-repeat'
+            width={65}
+            type='Number'
+            value={taskData.daysRepeat}
+            isDisabled={!taskData.repeatGoalEnabled}
+            onChange={(e) =>
+              taskData &&
+              setTaskData((current) => ({
+                ...current!,
+                daysRepeat: Number(e.target.value)
+              }))
+            }
+          />
+          <Label labelFor='days-repeat'>days</Label>
+        </Inline>
+        <Stack space='space.050'>
+          <Label labelFor='category'>Category</Label>
+          <Box xcss={{ width: '150px' }}>
             <Textfield
               id='category'
               value={taskData.category}
+              min={1}
+              max={1825}
               onChange={(e) =>
                 taskData &&
                 setTaskData((current) => ({
@@ -115,43 +142,32 @@ function AppPage() {
                 }))
               }
             />
-          </Stack>
-          <Stack space='space.050'>
-            <Text size='small' weight='medium'>
-              Task Completion History
-            </Text>
-            <Calendar
-              maxDate={dateToString(new Date())}
-              selected={taskData.history ?? []}
-              onSelect={handleSetHistory}
-            />
-          </Stack>
-          <Inline space='space.100' alignBlock='center'>
-            <Box xcss={{ width: '150px' }}>
-              <Button
-                shouldFitContainer
-                appearance='primary'
-                onClick={handleUpdateTask}>
-                Update
-              </Button>
-            </Box>
-            <Box xcss={{ width: '150px' }}>
-              <Button
-                shouldFitContainer
-                appearance='danger'
-                onClick={handleHideTask}>
-                Stop Tracking
-              </Button>
-            </Box>
-          </Inline>
-        </>
-      ) : (
-        <Button onClick={handleAddTask}>Track with Long Habit</Button>
-      )}
-    </Stack>
+          </Box>
+        </Stack>
+        <Box xcss={{ width: '150px' }}>
+          <Button
+            shouldFitContainer
+            appearance='primary'
+            onClick={handleUpdateTask}>
+            Update
+          </Button>
+        </Box>
+      </Stack>
+      <Stack space='space.050' alignInline='center'>
+        <Text size='small' weight='medium'>
+          Task Completion History
+        </Text>
+        <Calendar
+          maxDate={dateToString(new Date())}
+          selected={taskData.history ?? []}
+          onSelect={handleSetHistory}
+        />
+      </Stack>
+    </Inline>
+  ) : (
+    <ToggleActive isActive={!!taskData?.isActive} />
   )
 }
-
 ForgeReconciler.render(
   <React.StrictMode>
     <AppPage />

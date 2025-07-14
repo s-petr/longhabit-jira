@@ -30,10 +30,19 @@ const getTaskByKey = async (issueKey: string) => {
 }
 
 const getActiveTasksMetadata = async (): Promise<TaskMetadata[]> => {
-  const { results } = await kvs
-    .query()
-    .where('key', WhereConditions.beginsWith(TASK_KEY_PREFIX))
-    .getMany()
+  const results = []
+  let cursor: any
+
+  do {
+    const { results: result, nextCursor } = await kvs
+      .query()
+      .where('key', WhereConditions.beginsWith(TASK_KEY_PREFIX))
+      .cursor(cursor)
+      .getMany()
+
+    results.push(...result)
+    cursor = nextCursor
+  } while (cursor)
 
   const { success: responseIsValid, data: tasks } =
     taskMetadataKvResponse.safeParse(results)
@@ -222,10 +231,13 @@ resolver.define('addTask', async (req: any) => {
 resolver.define('hideTask', async (req: any) => {
   const issueKey = req?.context?.extension?.issue?.key
   if (!issueKey) return
-  const taskData = await getTaskByKey(issueKey)
+  const taskMetadata = await getTaskByKey(issueKey)
 
-  if (taskData)
-    await kvs.set(issueKeyToKvKey(issueKey), { ...taskData, isActive: false })
+  if (taskMetadata)
+    await kvs.set(issueKeyToKvKey(issueKey), {
+      ...taskMetadata,
+      isActive: false
+    })
 
   await clearDueDate(issueKey)
 })
