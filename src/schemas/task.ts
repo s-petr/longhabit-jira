@@ -30,6 +30,7 @@ export const taskMetadataKvResponse = z.array(
 
 export const taskSchema = taskMetadataSchema.extend({
   name: z.string().min(1).max(255),
+  assignee: z.string().min(1).max(255).optional(),
   project: z.string().min(1).max(255),
   status: z.string().min(1).max(255)
 })

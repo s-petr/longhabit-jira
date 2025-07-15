@@ -112,7 +112,7 @@ resolver.define('getActiveTasksData', async () => {
     const tasksMetadata = await getActiveTasksMetadata()
     if (!tasksMetadata.length) return []
 
-    const query = route`/rest/api/3/search?jql=creator=currentUser() AND key in (${getActiveTasksList(tasksMetadata).join(',')})&maxResults=100&fields=summary,status,project`
+    const query = route`/rest/api/3/search?jql=key in (${getActiveTasksList(tasksMetadata).join(',')})&maxResults=1000&fields=summary,assignee,status,project`
     const response = await api
       .asUser()
       .requestJira(query)
@@ -128,6 +128,7 @@ resolver.define('getActiveTasksData', async () => {
         return {
           issueKey,
           name: issue?.fields?.summary,
+          assignee: issue?.fields?.assignee?.accountId,
           category: metadata?.category,
           repeatGoalEnabled: metadata.repeatGoalEnabled,
           daysRepeat: metadata?.daysRepeat,

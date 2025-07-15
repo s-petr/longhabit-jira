@@ -7,7 +7,9 @@ import ForgeReconciler, {
   Inline,
   LoadingButton,
   Lozenge,
-  Pressable
+  Pressable,
+  User,
+  xcss
 } from '@forge/react'
 import React, { useEffect, useState } from 'react'
 import { Task } from '../schemas/task'
@@ -18,6 +20,7 @@ const head = {
   cells: Object.entries({
     issueKey: 'Issue',
     name: 'Name',
+    assignee: 'Assignee',
     category: 'Category',
     lastDate: 'Last Date',
     repeats: 'Repeats',
@@ -103,13 +106,23 @@ const UserIssues = () => {
           key: 'issueKey',
           content: (
             <Pressable
-              xcss={{ color: 'color.text.accent.blue' }}
+              xcss={{
+                color: 'color.text.accent.blue'
+              }}
               onClick={() => handleOpenIssue(task.issueKey)}>
               {task.issueKey}
             </Pressable>
           )
         },
         { key: 'name', content: task.name },
+        {
+          key: 'assignee',
+          content: (
+            <Box xcss={xcss({ height: '50px' })}>
+              <User accountId={task.assignee ?? ''} />
+            </Box>
+          )
+        },
         { key: 'category', content: task?.category },
         { key: 'lastDate', content: lastDateText },
         {
