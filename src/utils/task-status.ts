@@ -61,5 +61,13 @@ export function getTaskStatusLabels(
     }
   }
 
-  return { lastDateText, nextDateText, daysText, taskIsLate }
+  return {
+    lastDate,
+    lastDateText,
+    nextDate,
+    nextDateText,
+    dueInDays,
+    daysText,
+    taskIsLate
+  }
 }
