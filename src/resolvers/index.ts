@@ -94,20 +94,7 @@ const updateDueDate = async (task: TaskMetadata) => {
   })
 }
 
-const clearDueDate = async (issueKey: string) => {
-  await api.asUser().requestJira(route`/rest/api/3/issue/${issueKey}`, {
-    method: 'PUT',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      fields: { duedate: null }
-    })
-  })
-}
-
-resolver.define('getActiveTasksData', async () => {
+const getActiveTasksData = async () => {
   try {
     const tasksMetadata = await getActiveTasksMetadata()
     if (!tasksMetadata.length) return []
@@ -144,7 +131,30 @@ resolver.define('getActiveTasksData', async () => {
     console.error('Error fetching issues:', error)
     throw error
   }
-})
+}
+
+const getCategoriesList = async () => {
+  const activeTasks = await getActiveTasksData()
+  const categories = [...new Set(activeTasks.map((task) => task.category))]
+  return categories
+}
+
+const clearDueDate = async (issueKey: string) => {
+  await api.asUser().requestJira(route`/rest/api/3/issue/${issueKey}`, {
+    method: 'PUT',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      fields: { duedate: null }
+    })
+  })
+}
+
+resolver.define('getActiveTasksData', getActiveTasksData)
+
+resolver.define('getCategoriesList', getCategoriesList)
 
 resolver.define('getTask', async (req: any) => {
   const issueKey = req?.context?.extension?.issue?.key

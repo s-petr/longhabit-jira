@@ -14,6 +14,7 @@ import ForgeReconciler, {
 import React, { useEffect, useState } from 'react'
 import { Task, TaskMetadata } from '../schemas/task'
 import { dateToString } from '../utils/date-convert'
+import Autocomplete from './components/autocomplete'
 
 function ToggleActive({ isActive }: { isActive: boolean }) {
   const handleAddTask = async () => {
@@ -43,13 +44,16 @@ function ToggleActive({ isActive }: { isActive: boolean }) {
 
 function AppPage() {
   const [taskData, setTaskData] = useState<TaskMetadata | null>(null)
+  const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchTask = async () => {
+  const fetchTaskData = async () => {
     try {
       setIsLoading(true)
-      const data: Task | null = await invoke('getTask')
-      setTaskData(data)
+      const taskData: Task | null = await invoke('getTask')
+      const categoriesData: string[] = await invoke('getCategoriesList')
+      setTaskData(taskData)
+      setCategoriesList(categoriesData)
     } catch (error) {
       console.error('Error loading task data')
       console.error(error)
@@ -59,7 +63,7 @@ function AppPage() {
   }
 
   useEffect(() => {
-    fetchTask()
+    fetchTaskData()
   }, [])
 
   const handleUpdateTask = async () => {
@@ -128,17 +132,16 @@ function AppPage() {
         </Inline>
         <Stack space='space.050'>
           <Label labelFor='category'>Category</Label>
-          <Box xcss={{ width: '150px' }}>
-            <Textfield
+          <Box xcss={{ width: '100%' }}>
+            <Autocomplete
               id='category'
-              value={taskData.category}
-              min={1}
-              max={1825}
-              onChange={(e) =>
+              options={categoriesList}
+              value={taskData.category ?? ''}
+              onChange={(value) =>
                 taskData &&
                 setTaskData((current) => ({
                   ...current!,
-                  category: e.target.value
+                  category: value
                 }))
               }
             />

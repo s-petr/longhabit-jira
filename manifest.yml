@@ -18,17 +18,11 @@ modules:
   function:
     - key: resolver
       handler: index.handler
-  jira:uiModifications:
-    - key: ui-modifications
-      title: LongHabit UI Modifications
-      resource: ui-modifications
 resources:
   - key: app-page-ui
     path: src/frontend/app-page.tsx
   - key: issue-panel-ui
     path: src/frontend/issue-panel.tsx
-  - key: ui-modifications
-    path: src/frontend/ui-modifications
 permissions:
   scopes:
     - storage:app
