@@ -83,8 +83,28 @@ const UserIssues = () => {
   }
 
   const rows = tasks.map((task, index) => {
-    const createKey = (colName: string, rowKey: string | number) =>
-      `${colName}-${String(rowKey).replace(/\s/g, '')}`
+    const createKey = (
+      colName: string,
+      rowKey: string | number | boolean | null | undefined
+    ) => {
+      const putLastKey = '\uFFFF\uFFFF\uFFFF'
+      const invalidValues = [
+        true,
+        false,
+        null,
+        undefined,
+        '',
+        Infinity,
+        -Infinity,
+        NaN
+      ]
+      const rowSortKey = invalidValues.includes(
+        typeof rowKey === 'string' ? rowKey.trim() : rowKey
+      )
+        ? putLastKey
+        : String(rowKey).replace(/\s/g, '')
+      return `${colName}-${rowSortKey}`
+    }
 
     const {
       lastDate,
@@ -92,6 +112,7 @@ const UserIssues = () => {
       nextDate,
       nextDateText,
       dueInDays,
+      daysSince,
       daysText,
       taskIsLate
     } = getTaskStatusLabels(
@@ -107,7 +128,7 @@ const UserIssues = () => {
       Number(task.daysRepeat) > 0 &&
       Number(lastDate) > 0
         ? dueInDays
-        : Infinity
+        : daysSince || Infinity
 
     const statusColor =
       task.repeatGoalEnabled &&
@@ -143,37 +164,33 @@ const UserIssues = () => {
           )
         },
         {
-          key: createKey('category', task.category ?? 'nocategory'),
+          key: createKey('category', task.category),
           content: task?.category
         },
         {
-          key: 'last-date-' + (lastDate?.getTime() ?? Infinity),
+          key: createKey('last-date', lastDate?.getTime()),
           content: lastDateText
         },
         {
           key: createKey(
             'days-repeat-',
-            (task.repeatGoalEnabled && task.daysRepeat) || Infinity
+            task.repeatGoalEnabled && task.daysRepeat
           ),
-          content: (
-            <Lozenge isBold={!!task.repeatGoalEnabled}>
-              {task.repeatGoalEnabled
-                ? task.daysRepeat === 1
-                  ? 'every day'
-                  : `every ${task.daysRepeat} days`
-                : 'no goal'}
-            </Lozenge>
-          )
+          content: task.repeatGoalEnabled
+            ? task.daysRepeat === 1
+              ? 'every day'
+              : `every ${task.daysRepeat} days`
+            : 'no goal'
         },
         {
           key: createKey(
             'next-date',
-            (task.repeatGoalEnabled && nextDate?.getTime()) || Infinity
+            (task.repeatGoalEnabled && nextDate?.getTime()) || null
           ),
           content: nextDateText
         },
         {
-          key: createKey('status', dueDaysSortOrder),
+          key: dueDaysSortOrder,
           content: (
             <Lozenge isBold appearance={statusColor}>
               {daysText}

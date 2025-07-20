@@ -67,6 +67,7 @@ export function getTaskStatusLabels(
     nextDate,
     nextDateText,
     dueInDays,
+    daysSince,
     daysText,
     taskIsLate
   }
