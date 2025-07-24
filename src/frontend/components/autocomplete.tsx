@@ -46,7 +46,7 @@ export default function Autocomplete({
   ]
 
   return addingNewOption ? (
-    <Inline space='space.050'>
+    <Inline space='space.050' alignBlock='center'>
       <Textfield
         autoFocus
         id={id}
@@ -54,10 +54,7 @@ export default function Autocomplete({
         isInvalid={!newOptionIsValid}
         onChange={(e) => handleEditNewOption(e.target.value)}
       />
-      <Button
-        appearance='primary'
-        isDisabled={!newOptionIsValid}
-        onClick={handleAddNewOption}>
+      <Button isDisabled={!newOptionIsValid} onClick={handleAddNewOption}>
         <Icon label='add' glyph='check' size='small' />
       </Button>
       <Button onClick={handleCancelNewOption}>
