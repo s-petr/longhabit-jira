@@ -1,10 +1,9 @@
-import { invoke, router } from '@forge/bridge'
+import { invoke } from '@forge/bridge'
 import { ViewIssueModal } from '@forge/jira-bridge'
 import ForgeReconciler, {
   Box,
   Button,
   DynamicTable,
-  Inline,
   LoadingButton,
   Lozenge,
   Pressable,
@@ -237,15 +236,12 @@ function AppPage() {
   })
   return (
     <>
-      <Inline space='space.200'>
-        <Button iconBefore='refresh' onClick={() => router.reload()}>
-          Refresh Page
-        </Button>
-        <Button iconBefore='refresh' onClick={() => fetchIssues()}>
-          Refetch Data
-        </Button>
-      </Inline>
-      <DynamicTable head={head} rows={rows} defaultSortKey='issueKey' />
+      <DynamicTable
+        rowsPerPage={10}
+        head={head}
+        rows={rows}
+        defaultSortKey='issueKey'
+      />
     </>
   )
 }
