@@ -42,8 +42,9 @@ function ToggleActive({ isActive }: { isActive: boolean }) {
   )
 }
 
-function AppPage() {
+function IssuePanel() {
   const [taskData, setTaskData] = useState<TaskMetadata | null>(null)
+  const [taskDataHasChanged, setTaskDataHasChanged] = useState(false)
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -72,6 +73,15 @@ function AppPage() {
     await view.refresh()
   }
 
+  const handleSetTaskData = (key: keyof TaskMetadata, value: any) => {
+    if (!taskData || taskData[key] === value) return
+    setTaskDataHasChanged(true)
+    setTaskData((current) => ({
+      ...current!,
+      [key]: value
+    }))
+  }
+
   const handleSetHistory = (e: any) => {
     const selectedDay = e?.iso
     const currentHistory = taskData?.history ?? []
@@ -79,11 +89,7 @@ function AppPage() {
       ? currentHistory.filter((day) => day !== selectedDay)
       : [...currentHistory, selectedDay].sort()
 
-    taskData &&
-      setTaskData((current) => ({
-        ...current!,
-        history: newHistory
-      }))
+    handleSetTaskData('history', newHistory)
   }
 
   return isLoading ? (
@@ -104,11 +110,7 @@ function AppPage() {
             size='large'
             isChecked={!!taskData.repeatGoalEnabled}
             onChange={(e) =>
-              taskData &&
-              setTaskData((current) => ({
-                ...current!,
-                repeatGoalEnabled: !!e.target.checked
-              }))
+              handleSetTaskData('repeatGoalEnabled', !!e.target.checked)
             }
           />
 
@@ -121,11 +123,7 @@ function AppPage() {
             value={taskData.daysRepeat}
             isDisabled={!taskData.repeatGoalEnabled}
             onChange={(e) =>
-              taskData &&
-              setTaskData((current) => ({
-                ...current!,
-                daysRepeat: Number(e.target.value)
-              }))
+              handleSetTaskData('daysRepeat', Number(e.target.value))
             }
           />
           <Label labelFor='days-repeat'>days</Label>
@@ -137,24 +135,20 @@ function AppPage() {
               id='category'
               options={categoriesList}
               value={taskData.category ?? ''}
-              onChange={(value) =>
-                taskData &&
-                setTaskData((current) => ({
-                  ...current!,
-                  category: value
-                }))
-              }
+              onChange={(value) => handleSetTaskData('category', value)}
             />
           </Box>
         </Stack>
-        <Box xcss={{ width: '150px' }}>
-          <Button
-            shouldFitContainer
-            appearance='primary'
-            onClick={handleUpdateTask}>
-            Update
-          </Button>
-        </Box>
+        {taskDataHasChanged && (
+          <Box xcss={{ width: '150px' }}>
+            <Button
+              shouldFitContainer
+              appearance='primary'
+              onClick={handleUpdateTask}>
+              Update
+            </Button>
+          </Box>
+        )}
       </Stack>
       <Stack space='space.050' alignInline='center'>
         <Text size='small' weight='medium'>
@@ -171,8 +165,9 @@ function AppPage() {
     <ToggleActive isActive={!!taskData?.isActive} />
   )
 }
+
 ForgeReconciler.render(
   <React.StrictMode>
-    <AppPage />
+    <IssuePanel />
   </React.StrictMode>
 )

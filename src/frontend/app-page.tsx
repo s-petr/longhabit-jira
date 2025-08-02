@@ -30,7 +30,7 @@ const head = {
   }).map(([key, content]) => ({ key, content, isSortable: true }))
 }
 
-const UserIssues = () => {
+function AppPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [taskIsUpdating, setTaskIsUpdating] = useState('')
 
@@ -246,14 +246,6 @@ const UserIssues = () => {
         </Button>
       </Inline>
       <DynamicTable head={head} rows={rows} defaultSortKey='issueKey' />
-    </>
-  )
-}
-
-function AppPage() {
-  return (
-    <>
-      <UserIssues />
     </>
   )
 }
