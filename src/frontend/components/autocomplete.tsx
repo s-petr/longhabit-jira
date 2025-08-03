@@ -8,11 +8,13 @@ export default function Autocomplete({
   id = '',
   options: defaultOptions = [],
   value,
+  isDisabled = false,
   onChange = () => {}
 }: {
   id?: string
   options: string[]
   value?: string
+  isDisabled?: boolean
   onChange?: (value: string) => void
 }) {
   const [options, setOptions] = useState(defaultOptions)
@@ -52,9 +54,12 @@ export default function Autocomplete({
         id={id}
         value={newOptionValue}
         isInvalid={!newOptionIsValid}
+        isDisabled={isDisabled}
         onChange={(e) => handleEditNewOption(e.target.value)}
       />
-      <Button isDisabled={!newOptionIsValid} onClick={handleAddNewOption}>
+      <Button
+        isDisabled={!newOptionIsValid || isDisabled}
+        onClick={handleAddNewOption}>
         <Icon label='add' glyph='check' size='small' />
       </Button>
       <Button onClick={handleCancelNewOption}>
@@ -68,6 +73,7 @@ export default function Autocomplete({
       id={id}
       options={optionsForSelect}
       value={{ label: value, value }}
+      isDisabled={isDisabled}
       onChange={(value) =>
         value.value === ADD_NEW_OPTION_KEY
           ? setAddingNewOption(true)

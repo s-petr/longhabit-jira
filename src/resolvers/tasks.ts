@@ -124,12 +124,15 @@ export const addTask = async (issueKey: string) => {
   }
 }
 
-export const setTask = async (taskData: TaskMetadata) => {
-  const taskMetadata = await getTaskByKey(taskData.issueKey)
+export const setTask = async (taskData: Partial<TaskMetadata>) => {
+  const issueKey = taskData?.issueKey
+  if (!issueKey) return
+  const taskMetadata = await getTaskByKey(issueKey)
   if (!taskMetadata) return
 
   const updatedTaskMetadata = {
     ...taskMetadata,
+    ...('isActive' in taskData && { isActive: taskData.isActive }),
     ...('category' in taskData && { category: taskData.category }),
     ...('daysRepeat' in taskData && { daysRepeat: taskData.daysRepeat }),
     ...('repeatGoalEnabled' in taskData && {
@@ -138,9 +141,10 @@ export const setTask = async (taskData: TaskMetadata) => {
     ...('history' in taskData && { history: taskData.history })
   }
 
-  await kvSetTask(taskData.issueKey, updatedTaskMetadata)
+  await kvSetTask(issueKey, updatedTaskMetadata)
 
   if (updatedTaskMetadata.history.length) await syncDueDate(updatedTaskMetadata)
+  if (!updatedTaskMetadata.isActive) await clearDueDate(issueKey)
 }
 
 export const hideTask = async (issueKey: string) => {

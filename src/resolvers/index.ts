@@ -6,7 +6,6 @@ import {
   getActiveTasksData,
   getCategoriesList,
   getTaskByKey,
-  hideTask,
   setTask,
   taskDone,
   undoTaskDone
@@ -49,12 +48,6 @@ resolver.define('addTask', async (req: any) => {
   const issueKey = req?.context?.extension?.issue?.key
   if (!issueKey) return
   await addTask(issueKey)
-})
-
-resolver.define('hideTask', async (req: any) => {
-  const issueKey = req?.context?.extension?.issue?.key
-  if (!issueKey) return
-  await hideTask(issueKey)
 })
 
 export const handler = resolver.getDefinitions()
