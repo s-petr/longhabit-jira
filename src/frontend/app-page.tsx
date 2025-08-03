@@ -2,9 +2,7 @@ import { invoke } from '@forge/bridge'
 import { ViewIssueModal } from '@forge/jira-bridge'
 import ForgeReconciler, {
   Box,
-  Button,
   DynamicTable,
-  LoadingButton,
   Lozenge,
   Pressable,
   User,
@@ -14,6 +12,7 @@ import React, { useEffect, useState } from 'react'
 import { Task } from '../schemas/task'
 import { dateToString } from '../utils/date-convert'
 import { getTaskStatusLabels } from '../utils/task-status'
+import TaskDoneButton from './components/task-done-button'
 
 const head = {
   cells: Object.entries({
@@ -113,7 +112,7 @@ function AppPage() {
       dueInDays,
       daysSince,
       daysText,
-      taskIsLate
+      statusColor
     } = getTaskStatusLabels(
       task.repeatGoalEnabled,
       task.daysRepeat ?? 0,
@@ -128,15 +127,6 @@ function AppPage() {
       Number(lastDate) > 0
         ? dueInDays
         : daysSince || Infinity
-
-    const statusColor =
-      task.repeatGoalEnabled &&
-      Number(task.daysRepeat) > 0 &&
-      task.history.length
-        ? taskIsLate
-          ? 'removed'
-          : 'success'
-        : 'inprogress'
 
     return {
       key: `row-${index}-${task.issueKey}`,
@@ -198,38 +188,14 @@ function AppPage() {
         },
         {
           key: createKey('done', doneToday ? '1' : '0'),
-          content:
-            taskIsUpdating !== task.issueKey ? (
-              doneToday ? (
-                <Box xcss={{ width: '100px' }}>
-                  <Button
-                    shouldFitContainer
-                    iconBefore='undo'
-                    appearance='subtle'
-                    spacing='compact'
-                    onClick={() => handleUndoTaskDone(task.issueKey)}>
-                    Undo
-                  </Button>
-                </Box>
-              ) : (
-                <Box xcss={{ width: '100px' }}>
-                  <Button
-                    shouldFitContainer
-                    iconBefore='check'
-                    appearance='primary'
-                    spacing='compact'
-                    onClick={() => handleTaskDone(task.issueKey)}>
-                    Done
-                  </Button>
-                </Box>
-              )
-            ) : (
-              <Box xcss={{ width: '100px' }}>
-                <LoadingButton shouldFitContainer isLoading spacing='compact'>
-                  Updating...
-                </LoadingButton>
-              </Box>
-            )
+          content: (
+            <TaskDoneButton
+              task={task}
+              isUpdating={taskIsUpdating === task.issueKey}
+              onDone={handleTaskDone}
+              onUndo={handleUndoTaskDone}
+            />
+          )
         }
       ]
     }

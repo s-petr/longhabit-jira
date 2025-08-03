@@ -6,11 +6,23 @@ import {
 import { TaskHistoryDate } from '../schemas/task'
 import { getNextDueDate, stringToDate } from './date-convert'
 
+type TaskStatusLabels = {
+  lastDate: Date | null
+  lastDateText: string
+  nextDate: Date
+  nextDateText: string
+  dueInDays: number
+  daysSince: number
+  daysText: string
+  taskIsLate: boolean
+  statusColor: 'removed' | 'success' | 'inprogress'
+}
+
 export function getTaskStatusLabels(
   repeatGoalEnabled: boolean,
   daysRepeat: number,
   history: TaskHistoryDate[]
-) {
+): TaskStatusLabels {
   const lastDate = history.at(-1) ? stringToDate(history.at(-1) ?? '') : null
   const nextDate = getNextDueDate(history, daysRepeat)
 
@@ -61,6 +73,13 @@ export function getTaskStatusLabels(
     }
   }
 
+  const statusColor =
+    repeatGoalEnabled && Number(daysRepeat) > 0 && history.length
+      ? taskIsLate
+        ? 'removed'
+        : 'success'
+      : 'inprogress'
+
   return {
     lastDate,
     lastDateText,
@@ -69,6 +88,7 @@ export function getTaskStatusLabels(
     dueInDays,
     daysSince,
     daysText,
-    taskIsLate
+    taskIsLate,
+    statusColor
   }
 }
