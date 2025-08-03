@@ -131,19 +131,17 @@ function IssuePanel() {
               Task Settings
             </Heading>
 
-            <Box xcss={{ paddingTop: 'space.200' }}>
-              <Inline space='space.100' alignBlock='center'>
-                <Toggle
-                  id='active'
-                  size='large'
-                  isChecked={!!task?.isActive}
-                  onChange={(e) =>
-                    handleSetTaskData('isActive', !!e.target.checked)
-                  }
-                />
-                <Label labelFor='active'>Track with LongHabit</Label>
-              </Inline>
-            </Box>
+            <Inline space='space.100' alignBlock='center'>
+              <Toggle
+                id='active'
+                size='large'
+                isChecked={!!task?.isActive}
+                onChange={(e) =>
+                  handleSetTaskData('isActive', !!e.target.checked)
+                }
+              />
+              <Label labelFor='active'>Track with LongHabit</Label>
+            </Inline>
 
             <Inline space='space.100' alignBlock='center' grow='hug'>
               <Toggle
