@@ -3,9 +3,16 @@ import { ViewIssueModal } from '@forge/jira-bridge'
 import ForgeReconciler, {
   Box,
   DynamicTable,
+  Inline,
+  Label,
   Lozenge,
   Pressable,
+  Select,
+  Stack,
+  Textfield,
   User,
+  UserPicker,
+  UserPickerValue,
   xcss
 } from '@forge/react'
 import React, { useEffect, useState } from 'react'
@@ -31,6 +38,9 @@ const head = {
 function AppPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [taskIsUpdating, setTaskIsUpdating] = useState('')
+  const [userFilter, setUserFilter] = useState<string[]>([])
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([])
+  const [nameFilter, setNameFilter] = useState<string>('')
 
   const fetchIssues = async () => {
     try {
@@ -80,7 +90,23 @@ function AppPage() {
     }
   }
 
-  const rows = tasks.map((task, index) => {
+  const filteredTasks = tasks
+    .filter(
+      (task) => !userFilter.length || userFilter.includes(task?.assignee ?? '')
+    )
+    .filter(
+      (task) =>
+        !categoryFilter.length || categoryFilter.includes(task?.category ?? '')
+    )
+    .filter(
+      (task) =>
+        !nameFilter ||
+        new RegExp(nameFilter.replace(/\s+/g, ''), 'gi').test(
+          task.name.replace(/\s+/g, '')
+        )
+    )
+
+  const rows = filteredTasks.map((task, index) => {
     const createKey = (
       colName: string,
       rowKey: string | number | boolean | null | undefined
@@ -202,6 +228,60 @@ function AppPage() {
   })
   return (
     <>
+      <Inline space='space.200' alignBlock='end'>
+        <Box xcss={{ minWidth: '150px' }}>
+          <Stack space='space.050'>
+            <UserPicker
+              isMulti
+              label='Assignee'
+              placeholder='Filter by assignee'
+              name='assignee'
+              onChange={(users: unknown) =>
+                setUserFilter(
+                  (users as UserPickerValue[]).map((user) => user.id)
+                )
+              }
+            />
+          </Stack>
+        </Box>
+
+        <Box xcss={{ minWidth: '150px' }}>
+          <Stack space='space.050'>
+            <Label labelFor='category-filter'>Category</Label>
+            <Select
+              isMulti
+              placeholder=''
+              id='category-filter'
+              value={categoryFilter.map((category) => ({
+                label: category,
+                value: category
+              }))}
+              options={[
+                ...new Set(tasks.map((task) => task.category).filter(Boolean))
+              ].map((category) => ({ label: category, value: category }))}
+              onChange={(selected) =>
+                setCategoryFilter(
+                  selected.map(
+                    (category: { label: string; value: string }) =>
+                      category.value
+                  )
+                )
+              }
+            />
+          </Stack>
+        </Box>
+
+        <Box xcss={{ minWidth: '250px' }}>
+          <Stack space='space.050'>
+            <Label labelFor='name-filter'>Name</Label>
+            <Textfield
+              id='name-filter'
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+            />
+          </Stack>
+        </Box>
+      </Inline>
       <DynamicTable
         rowsPerPage={10}
         head={head}
