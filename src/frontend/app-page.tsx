@@ -38,9 +38,14 @@ const head = {
 function AppPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [taskIsUpdating, setTaskIsUpdating] = useState('')
+  const [projectFilter, setProjectFilter] = useState<string[]>([])
   const [userFilter, setUserFilter] = useState<string[]>([])
   const [categoryFilter, setCategoryFilter] = useState<string[]>([])
-  const [nameFilter, setNameFilter] = useState<string>('')
+  const [nameFilter, setNameFilter] = useState('')
+
+  const projectList = Array.from(
+    new Set(tasks.map((task) => task.issueKey.split('-')[0]))
+  )
 
   const fetchIssues = async () => {
     try {
@@ -91,6 +96,11 @@ function AppPage() {
   }
 
   const filteredTasks = tasks
+    .filter(
+      (task) =>
+        !projectFilter.length ||
+        projectFilter.some((project) => project === task.issueKey.split('-')[0])
+    )
     .filter(
       (task) => !userFilter.length || userFilter.includes(task?.assignee ?? '')
     )
@@ -231,6 +241,32 @@ function AppPage() {
       <Inline space='space.200' alignBlock='end'>
         <Box xcss={{ minWidth: '150px' }}>
           <Stack space='space.050'>
+            <Label labelFor='category-filter'>Project</Label>
+            <Select
+              isMulti
+              placeholder=''
+              id='project-filter'
+              value={projectFilter.map((project) => ({
+                label: project,
+                value: project
+              }))}
+              options={projectList.map((project) => ({
+                label: project,
+                value: project
+              }))}
+              onChange={(selected) =>
+                setProjectFilter(
+                  selected.map(
+                    (project: { label: string; value: string }) => project.value
+                  )
+                )
+              }
+            />
+          </Stack>
+        </Box>
+
+        <Box xcss={{ minWidth: '150px' }}>
+          <Stack space='space.050'>
             <UserPicker
               isMulti
               label='Assignee'
@@ -273,7 +309,7 @@ function AppPage() {
 
         <Box xcss={{ minWidth: '250px' }}>
           <Stack space='space.050'>
-            <Label labelFor='name-filter'>Name</Label>
+            <Label labelFor='name-filter'>Issue Name</Label>
             <Textfield
               id='name-filter'
               value={nameFilter}
